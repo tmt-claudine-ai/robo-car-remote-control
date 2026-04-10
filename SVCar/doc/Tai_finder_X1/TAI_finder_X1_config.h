@@ -1,0 +1,35 @@
+#ifndef _TAI_FINDER_X1_CONFIG_H_
+#define _TAI_FINDER_X1_CONFIG_H_
+
+#define LEFT_INT_PIN 4
+#define RIGHT_INT_PIN 2
+#define LEFT_FRONT_DIR_PIN 7
+#define LEFT_FRONT_PWM_PIN 9
+#define LEFT_FRONT_DIR_FRONT 0
+#define LEFT_FRONT_DIR_BACK 1
+#define LEFT_BACK_DIR_PIN 8
+#define LEFT_BACK_PWM_PIN 10
+#define LEFT_BACK_DIR_FRONT 0
+#define LEFT_BACK_DIR_BACK 1
+#define RIGHT_FRONT_DIR_PIN 13
+#define RIGHT_FRONT_PWM_PIN 3
+#define RIGHT_FRONT_DIR_FRONT 1
+#define RIGHT_FRONT_DIR_BACK 0
+#define RIGHT_BACK_DIR_PIN 12
+#define RIGHT_BACK_PWM_PIN 11
+#define RIGHT_BACK_DIR_FRONT 1
+#define RIGHT_BACK_DIR_BACK 0
+#define SDA A4
+#define SCL A5
+#define LED_PIN A3
+#define SELF_LOCK_PIN A0
+#define TRIG_PIN A2
+#define ECHO_PIN A1
+#define LEFT_IR_PIN A7
+#define RIGHT_IR_PIN A6
+#define WHEEL_SIZE_MM 60
+#define CODERS 40
+#define GYRORATE (4 / 16.4 * PI / 180.0 / 1000000.0)
+#define LED_NUM 4
+
+#endif

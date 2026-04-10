@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网关控制台 | Gateway Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .log-box { max-height: 250px; overflow-y: auto; }
+        /* 自定义滚动条样式 */
+        .log-box::-webkit-scrollbar { width: 8px; }
+        .log-box::-webkit-scrollbar-track { background: #1f2937; }
+        .log-box::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-6">
+
+    <div class="max-w-4xl mx-auto space-y-6">
+        <div class="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-400">Gateway Dashboard（默认热点MAMA-GW/12345678）</h1>
+                <p class="text-sm text-gray-400 mt-1">设备中枢管理系统</p>
+            </div>
+            <div class="flex items-center space-x-4 w-full md:w-auto">
+                <input type="text" id="gw-ip" value="192.168.4.1" class="w-full md:w-48 bg-gray-700 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500" placeholder="网关 IP (如 192.168.4.1)">
+                <button onclick="checkHealth()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded font-semibold transition whitespace-nowrap shadow-md">测试连接</button>
+            </div>
+        </div>
+
+
+
+        <div class="bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-700">
+            <h2 class="text-xl font-semibold mb-4 text-yellow-400 border-b border-gray-700 pb-2 flex items-center justify-between">
+                <span>⚡ ATMega328P固件离线烧录</span>
+                <span id="fw-status" class="text-xs bg-red-900 text-red-300 px-3 py-1 rounded-full border border-red-700">网关内暂无固件</span>
+            </h2>
+            
+            <div class="space-y-5">
+                <div class="bg-gray-750 p-4 rounded-lg border border-gray-600 bg-gray-700/50">
+                    <h3 class="text-sm text-blue-300 mb-3 font-bold flex items-center">
+                        <span class="bg-blue-600 text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2 text-xs">1</span> 
+                        将固件推送至网关内存 (RAM)
+                    </h3>
+                    <div class="flex flex-col sm:flex-row items-center gap-3">
+                        <input type="file" id="hex-file" accept=".hex" class="block w-full text-sm text-gray-400
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-md file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-gray-600 file:text-white
+                            hover:file:bg-gray-500 cursor-pointer transition">
+                        <button onclick="uploadToGateway()" id="upload-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded font-bold transition whitespace-nowrap shadow-md">推送到网关</button>
+                    </div>
+                </div>
+
+                <div class="bg-gray-750 p-4 rounded-lg border border-gray-600 bg-gray-700/50">
+                    <h3 class="text-sm text-yellow-300 mb-3 font-bold flex items-center">
+                        <span class="bg-yellow-600 text-white rounded-full w-5 h-5 inline-flex items-center justify-center mr-2 text-xs">2</span> 
+                        执行目标板物理烧录 (STK500v1)
+                    </h3>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="flex-1">
+                            <label class="block text-xs text-gray-400 mb-1 pl-1">选择目标波特率</label>
+                            <select id="baud-rate" class="w-full bg-gray-800 text-white px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-yellow-500 cursor-pointer">
+                                <option value="115200" selected>115200 </option>
+                                <option value="57600" >57600 </option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="executeFlash()" id="flash-btn" class="w-full sm:w-auto bg-gray-600 text-gray-400 px-8 py-2 rounded font-bold transition cursor-not-allowed border border-gray-600" disabled>开始物理烧录</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-black rounded-lg p-4 log-box font-mono text-sm border border-gray-700 shadow-inner tracking-tight" id="log-output">
+                    <span class="text-green-500">> 系统控制台已初始化... 准备就绪。</span><br>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 核心日志与基础通信 ---
+        function logMsg(msg, color = 'text-gray-300') {
+            const box = document.getElementById('log-output');
+            const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+            box.innerHTML += `<span class="text-gray-500">[${time}]</span> <span class="${color}">${msg}</span><br>`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function getBaseUrl() {
+            const ip = document.getElementById('gw-ip').value || '192.168.4.1';
+            return `http://${ip}:20180/api/v1`;
+        }
+
+        function updateFirmwareStatus(hasFw) {
+            const badge = document.getElementById('fw-status');
+            const flashBtn = document.getElementById('flash-btn');
+            if (hasFw) {
+                badge.className = "text-xs bg-green-900 text-green-300 px-3 py-1 rounded-full border border-green-700 transition-colors";
+                badge.innerText = "网关缓存已就绪";
+                flashBtn.disabled = false;
+                flashBtn.className = "w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 px-8 py-2 rounded font-bold transition text-white shadow-md border border-yellow-500";
+            } else {
+                badge.className = "text-xs bg-red-900 text-red-300 px-3 py-1 rounded-full border border-red-700 transition-colors";
+                badge.innerText = "网关内暂无固件";
+                flashBtn.disabled = true;
+                flashBtn.className = "w-full sm:w-auto bg-gray-600 text-gray-400 px-8 py-2 rounded font-bold transition cursor-not-allowed border border-gray-600";
+            }
+        }
+
+        // --- 业务功能函数 ---
+        async function checkHealth() {
+            try {
+                logMsg('正在连接网关...', 'text-blue-400');
+                const res = await fetch(`${getBaseUrl()}/health`, { method: 'GET', signal: AbortSignal.timeout(3000) });
+                const data = await res.json();
+                if (data.ok) {
+                    logMsg('✅ 网关连接成功！通讯正常。', 'text-green-400');
+                    updateFirmwareStatus(data.hasFirmware === true);
+                }
+            } catch (err) {
+                logMsg('❌ 连接失败，请检查 IP 地址或确认设备已连接热点。', 'text-red-400');
+                updateFirmwareStatus(false);
+            }
+        }
+
+        async function configWiFi() {
+            const ssid = document.getElementById('wifi-ssid').value;
+            const pass = document.getElementById('wifi-pass').value;
+            if (!ssid) return alert("请输入 SSID");
+            
+            try {
+                logMsg(`正在下发 WiFi 配置: ${ssid}...`, 'text-blue-400');
+                const res = await fetch(`${getBaseUrl()}/gw/wifi`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ssid, pass })
+                });
+                const data = await res.json();
+                if (data.ok) logMsg(`✅ WiFi 连接成功! 局域网 IP: ${data.staIp}`, 'text-green-400');
+                else logMsg(`❌ WiFi 连接失败: ${data.error}`, 'text-red-400');
+            } catch (err) {
+                logMsg(`❌ 请求发送失败: ${err.message}`, 'text-red-400');
+            }
+        }
+
+        async function sendCommand(name, args) {
+            try {
+                logMsg(`发送指令: ${name}`, 'text-blue-400');
+                const res = await fetch(`${getBaseUrl()}/devices/mama-328pb-001/commands`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, args, timeoutMs: 3000 })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    let msg = `✅ 执行成功`;
+                    if (data.value !== undefined) msg += ` => 返回值: ${data.value}`;
+                    logMsg(msg, 'text-green-400');
+                } else {
+                    logMsg(`❌ 执行失败: ${data.error}`, 'text-red-400');
+                }
+            } catch (err) {
+                logMsg(`❌ 请求发送失败: ${err.message}`, 'text-red-400');
+            }
+        }
+
+        // --- 固件烧录核心逻辑 (两步走) ---
+        async function uploadToGateway() {
+            const fileInput = document.getElementById('hex-file');
+            const btn = document.getElementById('upload-btn');
+            if (fileInput.files.length === 0) return alert("请先选择一个 .hex 固件文件！");
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function(e) {
+                const hexText = e.target.result;
+                const hexB64 = btoa(hexText); // 纯文本直接转换为 Base64
+                
+                logMsg(`📤 读取完毕 (${hexText.length} bytes)，正在推送到网关内存...`, 'text-blue-400');
+                btn.disabled = true; btn.innerText = "推送中...";
+
+                try {
+                    const res = await fetch(`${getBaseUrl()}/gw/upload_fw`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ hexB64: hexB64 })
+                    });
+                    
+                    const data = await res.json();
+                    if (data.ok) {
+                        logMsg('✅ 固件成功驻留至网关 RAM！现可对设备进行高频物理烧录。', 'text-green-400');
+                        updateFirmwareStatus(true);
+                    } else {
+                        logMsg(`❌ 推送失败: ${data.error}`, 'text-red-400');
+                        updateFirmwareStatus(false);
+                    }
+                } catch (err) {
+                    logMsg(`❌ 网络请求失败: ${err.message}`, 'text-red-400');
+                } finally {
+                    btn.disabled = false; btn.innerText = "推送到网关";
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        async function executeFlash() {
+            const btn = document.getElementById('flash-btn');
+            const baud = document.getElementById('baud-rate').value;
+            
+            logMsg(`🔥 [STK500] 启动物理烧录... 正在以 ${baud} 波特率尝试唤醒目标芯片...`, 'text-yellow-400');
+            btn.disabled = true; 
+            const originalText = btn.innerText;
+            btn.innerText = "烧录中...";
+
+            try {
+                // 设置 15 秒的超时时间，因为物理擦写通常需要 3-5 秒
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+                const res = await fetch(`${getBaseUrl()}/gw/flash_local`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        baud: parseInt(baud),
+                        resetPin: 4 // 硬件定义的 RST 引脚
+                    }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                const data = await res.json();
+                
+                if (data.ok) {
+                    logMsg('🎉 物理烧录彻底成功！目标底层板已重启并开始执行新代码。', 'text-green-400');
+                } else {
+                    logMsg(`❌ 烧录失败: ${data.error}`, 'text-red-400');
+                    if (data.error.includes('sync failed')) {
+                        logMsg('💡 排错指南：', 'text-yellow-300');
+                        logMsg(' 1. 波特率不匹配 (尝试切换上方下拉框)', 'text-gray-400');
+                        logMsg(' 2. TX / RX 引脚接反 (请确认交叉相连)', 'text-gray-400');
+                        logMsg(' 3. 【极大概率】RST 复位引脚未正确连接', 'text-red-300');
+                    }
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    logMsg('❌ 烧录请求超时 (网关可能卡死或失去响应)', 'text-red-400');
+                } else {
+                    logMsg(`❌ 请求失败: ${err.message}`, 'text-red-400');
+                }
+            } finally {
+                btn.disabled = false; 
+                btn.innerText = originalText;
+            }
+        }
+    </script>
+</body>
+</html>
