@@ -1,8 +1,8 @@
 #pragma once
 
 namespace config {
-static const char *WIFI_SSID = "Blackout02";
-static const char *WIFI_PASSWORD = "19920326081x";
+static const char *WIFI_SSID = "YOUR_WIFI_SSID";
+static const char *WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 
 static const char *MQTT_HOST = "192.168.50.88";
 static const uint16_t MQTT_PORT = 1883;
