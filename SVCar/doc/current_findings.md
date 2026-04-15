@@ -121,7 +121,7 @@ PC -> MQTT Broker -> ESP32-S3 -> UART0(D0/D1 on 328P) -> Nano runtime -> 底盘
 ### ESP32 侧
 
 - [esp32_uart0_phase1_bridge.ino](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/esp32_uart0_phase1_bridge.ino)
-- [config.h](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/config.h)
+- [config.example.h](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/config.example.h)
 
 特点：
 
@@ -172,7 +172,7 @@ PC -> MQTT Broker -> ESP32-S3 -> UART0(D0/D1 on 328P) -> Nano runtime -> 底盘
 
 1. 给 328P 烧录 [nano_phase1_uart0_runtime.ino](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/nano_phase1_uart0_runtime/nano_phase1_uart0_runtime.ino)
 2. 给 ESP32-S3 烧录 [esp32_uart0_phase1_bridge.ino](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/esp32_uart0_phase1_bridge.ino)
-3. 在 [config.h](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/config.h) 中填入 Wi‑Fi / MQTT 配置
+3. 复制 [config.example.h](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/config.example.h) 为本地 `config.h`，再填入 Wi‑Fi / MQTT 配置
 4. 启动 broker 和 teleop
 5. 在 ESP32 串口监视器观察：
    - `ROBOT READY,...`

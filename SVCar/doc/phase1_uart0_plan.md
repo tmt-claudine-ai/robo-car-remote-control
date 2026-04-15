@@ -42,7 +42,7 @@ PC -> MQTT Broker -> ESP32-S3 -> UART0(D0/D1 on 328P) -> 328P runtime -> 底盘
 ### ESP32-S3 桥接程序
 
 - [esp32_uart0_phase1_bridge.ino](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/esp32_uart0_phase1_bridge.ino)
-- [config.h](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/config.h)
+- [config.example.h](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/config.example.h)
 
 这份草图：
 
@@ -59,7 +59,7 @@ PC -> MQTT Broker -> ESP32-S3 -> UART0(D0/D1 on 328P) -> 328P runtime -> 底盘
 
 ## 配置步骤
 
-先编辑 [config.h](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/config.h)：
+先复制 [config.example.h](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/config.example.h) 为本地 `config.h`，再编辑：
 
 - `WIFI_SSID`
 - `WIFI_PASSWORD`
@@ -150,7 +150,7 @@ teleop：
 
 ### 3. `PULSE_RESET_ON_BOOT`
 
-[config.h](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/config.h) 里默认：
+由 [config.example.h](h:/Work/TwinMatrix/Projects/Mixly/SVCar/firmware/esp32_uart0_phase1_bridge/config.example.h) 复制出的本地 `config.h` 里默认：
 
 ```cpp
 PULSE_RESET_ON_BOOT = false

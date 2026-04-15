@@ -50,7 +50,8 @@ From this directory:
 - Flash `firmware/nano_phase1_uart0_runtime/nano_phase1_uart0_runtime.ino` to the ATmega328P/Nano
 - Flash `firmware/esp32_uart0_phase1_bridge/esp32_uart0_phase1_bridge.ino` to the ESP32-S3
 
-Before flashing the ESP32, fill in:
+Before flashing the ESP32, copy `firmware/esp32_uart0_phase1_bridge/config.example.h`
+to `firmware/esp32_uart0_phase1_bridge/config.h`, then fill in:
 
 - Wi-Fi SSID/password
 - MQTT broker host/port
@@ -58,7 +59,7 @@ Before flashing the ESP32, fill in:
 
 in:
 
-- `firmware/esp32_uart0_phase1_bridge/config.h`
+- `firmware/esp32_uart0_phase1_bridge/config.example.h` -> local `config.h`
 
 ### 4. Run teleop
 

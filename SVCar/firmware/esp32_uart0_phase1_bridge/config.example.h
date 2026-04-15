@@ -2,20 +2,22 @@
 
 namespace config {
 
+// Copy this file to config.h and fill in the local values there.
+
 // --- WiFi ---
 static const char *WIFI_SSID = "YOUR_WIFI_SSID";
 static const char *WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 
 // --- MQTT (over WebSocket Secure via Cloudflare) ---
-static const char *MQTT_HOST = "mqtt-battlebots.stayspeed.com";
+static const char *MQTT_HOST = "mqtt.example.com";
 static const uint16_t MQTT_PORT = 443;
 static const char *MQTT_WS_PATH = "/";
-static const char *MQTT_USERNAME = "car-01";
-static const char *MQTT_PASSWORD = "bb-car01-2026";
+static const char *MQTT_USERNAME = "YOUR_MQTT_USERNAME";
+static const char *MQTT_PASSWORD = "YOUR_MQTT_PASSWORD";
 static const bool MQTT_USE_SSL = true;  // false for plain WS (local testing)
 
 // For local LAN testing (no WSS), use:
-// static const char *MQTT_HOST = "192.168.50.88";
+// static const char *MQTT_HOST = "192.168.1.10";
 // static const uint16_t MQTT_PORT = 1883;
 // static const bool MQTT_USE_SSL = false;
 
