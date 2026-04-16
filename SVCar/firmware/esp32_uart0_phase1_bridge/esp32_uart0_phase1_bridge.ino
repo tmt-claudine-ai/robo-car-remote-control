@@ -239,13 +239,18 @@ void handleCmdMessage(const char *rawPayload) {
 // ---------------------------------------------------------------------------
 // MQTT per-topic callback (called for every message)
 // ---------------------------------------------------------------------------
-void onMqttMessage(const String &topic, const String &payload, const size_t size) {
-  Serial.printf("[mqtt] %s => %s\n", topic.c_str(), payload.c_str());
+void dispatchMqttMessage(const char *topic, const char *rawPayload, const size_t size) {
+  char payload[128];
+  const size_t copyLength = (size < sizeof(payload) - 1) ? size : (sizeof(payload) - 1);
+  memcpy(payload, rawPayload, copyLength);
+  payload[copyLength] = '\0';
 
-  if (topic == claimTopic)   { handleClaimMessage(payload.c_str());  return; }
-  if (topic == releaseTopic) { handleReleaseMessage(payload.c_str()); return; }
-  if (topic == cmdTopic)     { handleCmdMessage(payload.c_str());    return; }
-  if (topic == stopTopic)    { handleStopMessage(payload.c_str());   return; }
+  Serial.printf("[mqtt] %s => %s\n", topic, payload);
+
+  if (strcmp(topic, claimTopic) == 0)   { handleClaimMessage(payload); return; }
+  if (strcmp(topic, releaseTopic) == 0) { handleReleaseMessage(payload); return; }
+  if (strcmp(topic, cmdTopic) == 0)     { handleCmdMessage(payload); return; }
+  if (strcmp(topic, stopTopic) == 0)    { handleStopMessage(payload); return; }
 }
 
 // ---------------------------------------------------------------------------
@@ -258,16 +263,30 @@ void mqttConnect() {
 
   Serial.println("[mqtt] connecting ...");
 
-  mqttClient.begin(config::MQTT_USERNAME, config::MQTT_PASSWORD);
+  bool connected = false;
+  if (config::MQTT_USERNAME[0] != '\0') {
+    connected = mqttClient.connect(clientId, config::MQTT_USERNAME, config::MQTT_PASSWORD);
+  } else {
+    connected = mqttClient.connect(clientId);
+  }
+  if (!connected) {
+    Serial.println("[mqtt] connect failed");
+    return;
+  }
 
   // Subscribe to topics
-  mqttClient.subscribe([](const String &topic, const String &payload, const size_t size) {
-    // Global wildcard handler — we use per-topic subscribe below
+  mqttClient.subscribe(claimTopic, [](const char *payload, const size_t size) {
+    dispatchMqttMessage(claimTopic, payload, size);
   });
-  mqttClient.subscribe(claimTopic,   onMqttMessage);
-  mqttClient.subscribe(releaseTopic, onMqttMessage);
-  mqttClient.subscribe(cmdTopic,     onMqttMessage);
-  mqttClient.subscribe(stopTopic,    onMqttMessage);
+  mqttClient.subscribe(releaseTopic, [](const char *payload, const size_t size) {
+    dispatchMqttMessage(releaseTopic, payload, size);
+  });
+  mqttClient.subscribe(cmdTopic, [](const char *payload, const size_t size) {
+    dispatchMqttMessage(cmdTopic, payload, size);
+  });
+  mqttClient.subscribe(stopTopic, [](const char *payload, const size_t size) {
+    dispatchMqttMessage(stopTopic, payload, size);
+  });
 
   mqttClient.publish(statusTopic, "{\"state\":\"online\",\"detail\":\"mqtt_connected\"}", true);
   mqttReady = true;
