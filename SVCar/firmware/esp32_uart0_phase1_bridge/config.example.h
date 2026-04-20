@@ -42,4 +42,13 @@ static const int MAX_SLEW_STEP = 60;
 static const uint32_t DEFAULT_COMMAND_TTL_MS = 250;
 static const uint32_t MIN_COMMAND_TTL_MS = 120;
 static const uint32_t MAX_COMMAND_TTL_MS = 1000;
+
+// --- Remote firmware update ---
+static const uint32_t FW_DOWNLOAD_TIMEOUT_MS = 45000;
+static const uint32_t FW_STATUS_INTERVAL_MS = 1000;
+static const uint32_t FW_MAX_HEX_SIZE = 98304;
+static const uint32_t FW_FLASH_BAUD = 115200;
+static const uint32_t FW_FLASH_SIZE_BYTES = 32768;
+static const uint16_t FW_FLASH_PAGE_SIZE = 128;
+static const bool FW_TLS_INSECURE = true;
 }
